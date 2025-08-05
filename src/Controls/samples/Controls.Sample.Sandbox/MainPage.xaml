@@ -1,5 +1,26 @@
-﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Maui.Controls.Sample.MainPage"
-             xmlns:local="clr-namespace:Maui.Controls.Sample">
+﻿<ContentPage
+    x:Class="Maui.Controls.Sample.MainPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Maui.Controls.Sample">
+
+    <HorizontalStackLayout>
+        <Rectangle
+            BackgroundColor="Blue"
+            HeightRequest="400"
+            WidthRequest="400">
+            <Rectangle.GestureRecognizers>
+                <PinchGestureRecognizer PinchUpdated="OnPinchUpdated1" />
+            </Rectangle.GestureRecognizers>
+        </Rectangle>
+
+        <Rectangle
+            BackgroundColor="Red"
+            HeightRequest="400"
+            WidthRequest="400">
+            <Rectangle.GestureRecognizers>
+                <PinchGestureRecognizer PinchUpdated="OnPinchUpdated2" />
+            </Rectangle.GestureRecognizers>
+        </Rectangle>
+    </HorizontalStackLayout>
 </ContentPage>

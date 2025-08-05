@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls.Internals;
@@ -528,6 +529,8 @@ namespace Microsoft.Maui.Controls.Platform
 
 		void OnManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
 		{
+			Debug.WriteLine($"OnManipulationCompleted");
+
 			SwipeComplete(true);
 			PinchComplete(true);
 			PanComplete(true);
@@ -547,6 +550,7 @@ namespace Microsoft.Maui.Controls.Platform
 
 		void OnManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e)
 		{
+			Debug.WriteLine($"OnManipulationStarted");
 			if (Element is not View view)
 			{
 				return;
@@ -558,6 +562,7 @@ namespace Microsoft.Maui.Controls.Platform
 
 		void OnPointerCanceled(object sender, PointerRoutedEventArgs e)
 		{
+			Debug.WriteLine($"OnPointerCanceled: PointerId {e.Pointer.PointerId}");
 			_fingers.Remove(e.Pointer.PointerId);
 
 			SwipeComplete(false);
@@ -567,8 +572,10 @@ namespace Microsoft.Maui.Controls.Platform
 
 		void OnPointerExited(object sender, PointerRoutedEventArgs e)
 		{
+			Debug.WriteLine($"OnPointerExited: PointerId {e.Pointer.PointerId}");
 			if (!_isPanning)
 			{
+				Debug.WriteLine($"Removed");
 				_fingers.Remove(e.Pointer.PointerId);
 			}
 
@@ -579,6 +586,7 @@ namespace Microsoft.Maui.Controls.Platform
 		void OnPointerPressed(object sender, PointerRoutedEventArgs e)
 		{
 			uint id = e.Pointer.PointerId;
+			Debug.WriteLine($"OnPointerPressed: PointerId {id}");
 			if (!_fingers.Contains(id))
 			{
 				_fingers.Add(id);
@@ -587,6 +595,7 @@ namespace Microsoft.Maui.Controls.Platform
 
 		void OnPointerReleased(object sender, PointerRoutedEventArgs e)
 		{
+			Debug.WriteLine($"OnPointerReleased: PointerId {e.Pointer.PointerId}");
 			_fingers.Remove(e.Pointer.PointerId);
 
 			SwipeComplete(true);

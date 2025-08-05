@@ -567,10 +567,7 @@ namespace Microsoft.Maui.Controls.Platform
 
 		void OnPointerExited(object sender, PointerRoutedEventArgs e)
 		{
-			if (!_isPanning)
-			{
-				_fingers.Remove(e.Pointer.PointerId);
-			}
+			_fingers.Remove(e.Pointer.PointerId);
 
 			SwipeComplete(true);
 			PinchComplete(true);

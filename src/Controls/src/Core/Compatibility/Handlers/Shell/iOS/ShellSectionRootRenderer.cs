@@ -101,7 +101,6 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 			ShellSection.PropertyChanged += OnShellSectionPropertyChanged;
 			ShellSectionController.ItemsCollectionChanged += OnShellSectionItemsChanged;
 
-			_blurView = new UIView();
 			UIVisualEffect blurEffect = UIBlurEffect.FromStyle(UIBlurEffectStyle.ExtraLight);
 			_blurView = new UIVisualEffectView(blurEffect);
 
@@ -145,14 +144,9 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 		{
 			_pageAnimation?.StopAnimation(true);
 			_pageAnimation = null;
-			if (ShellSection != null)
-				ShellSection.PropertyChanged -= OnShellSectionPropertyChanged;
-
-			if (ShellSectionController != null)
-				ShellSectionController.ItemsCollectionChanged -= OnShellSectionItemsChanged;
-
-			if (_shellContext?.Shell != null)
-				_shellContext.Shell.PropertyChanged -= HandleShellPropertyChanged;
+			ShellSection?.PropertyChanged -= OnShellSectionPropertyChanged;
+			ShellSectionController?.ItemsCollectionChanged -= OnShellSectionItemsChanged;
+			_shellContext?.Shell?.PropertyChanged -= HandleShellPropertyChanged;
 
 			if (_renderers != null)
 			{
@@ -185,8 +179,6 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 					oldRenderer.ViewController?.ViewIfLoaded?.RemoveFromSuperview();
 					oldRenderer.ViewController?.RemoveFromParentViewController();
-
-					var element = oldRenderer.VirtualView;
 					oldRenderer?.DisconnectHandler();
 				}
 
@@ -276,8 +268,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				if (_renderers.ContainsKey(item))
 					continue;
 
-				Page page = null;
-				if (!createdPages.TryGetValue(item, out page))
+				if (!createdPages.TryGetValue(item, out Page page))
 				{
 					page = ((IShellContentController)item).GetOrCreateContent();
 					contentItems = ShellSectionController.GetItems();
@@ -315,15 +306,15 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				if (newContent == null)
 					return;
 
+				var items = ShellSectionController.GetItems();
 				if (_currentContent == null)
 				{
 					_currentContent = newContent;
-					_currentIndex = ShellSectionController.GetItems().IndexOf(_currentContent);
+					_currentIndex = items.IndexOf(_currentContent);
 					_tracker.Page = ((IShellContentController)newContent).Page;
 					return;
 				}
 
-				var items = ShellSectionController.GetItems();
 				if (items.Count == 0)
 					return;
 
@@ -340,10 +331,9 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				_currentContent = newContent;
 				_currentIndex = newIndex;
 
-				if (!_renderers.ContainsKey(newContent))
+				if (!_renderers.TryGetValue(newContent, out var currentRenderer))
 					return;
 
-				var currentRenderer = _renderers[newContent];
 				_isAnimatingOut = oldRenderer;
 				_pageAnimation?.StopAnimation(true);
 				_pageAnimation = null;
@@ -353,9 +343,6 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				{
 					_pageAnimation.AddCompletion((p) =>
 					{
-						if (_isDisposed)
-							return;
-
 						if (p == UIViewAnimatingPosition.End)
 						{
 							RemoveNonVisibleRenderers();
@@ -384,26 +371,26 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 			newRenderer.ViewController.View.Frame = new CGRect(-motionDirection * View.Bounds.Width, 0, View.Bounds.Width, View.Bounds.Height);
 
-			if (oldRenderer.ViewController.View != null)
-				oldRenderer.ViewController.View.Frame = containerView.Bounds;
+			oldRenderer.ViewController.View?.Frame = containerView.Bounds;
 
 			return new UIViewPropertyAnimator(0.25, UIViewAnimationCurve.EaseOut, () =>
 			{
 				newRenderer.ViewController.View.Frame = containerView.Bounds;
 
-				if (oldRenderer.ViewController.View != null)
-					oldRenderer.ViewController.View.Frame = new CGRect(motionDirection * View.Bounds.Width, 0, View.Bounds.Width, View.Bounds.Height);
+				oldRenderer.ViewController.View?.Frame = new CGRect(motionDirection * View.Bounds.Width, 0, View.Bounds.Width, View.Bounds.Height);
 
 			});
 		}
 
 		void RemoveNonVisibleRenderers()
 		{
-			IPlatformViewHandler activeRenderer = null;
+			if (_isDisposed)
+				return;
+
 			var activeItem = ShellSection?.CurrentItem;
 
 			if (activeItem is IShellContentController scc &&
-				_renderers.TryGetValue(activeItem, out activeRenderer))
+				_renderers.TryGetValue(activeItem, out IPlatformViewHandler activeRenderer))
 			{
 				var sectionItems = ShellSectionController.GetItems();
 				List<ShellContent> removeMe = null;
@@ -419,7 +406,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 
 					if (!sectionItems.Contains(oldContent) && _renderers.ContainsKey(oldContent))
 					{
-						removeMe = removeMe ?? new List<ShellContent>();
+						removeMe ??= new List<ShellContent>();
 						removeMe.Add(oldContent);
 
 						if (oldRenderer.PlatformView is not null)
@@ -534,7 +521,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 		{
 			page.Handler?.DisconnectHandler();
 
-			var renderer = (IPlatformViewHandler)page.ToHandler(shellContent.FindMauiContext());
+			var renderer = page.ToHandler(shellContent.FindMauiContext());
 			_renderers[shellContent] = renderer;
 			UpdateAdditionalSafeAreaInsets(renderer);
 			return renderer;
@@ -551,7 +538,7 @@ namespace Microsoft.Maui.Controls.Platform.Compatibility
 				tabThickness = HeaderHeight;
 				var headerTop = (OperatingSystem.IsIOSVersionAtLeast(11) || OperatingSystem.IsMacCatalystVersionAtLeast(11)
 #if TVOS
-				|| OperatingSystem.IsTvOSVersionAtLeast(11)
+					|| OperatingSystem.IsTvOSVersionAtLeast(11)
 #endif
 					) ? View.SafeAreaInsets.Top : TopLayoutGuide.Length;
 

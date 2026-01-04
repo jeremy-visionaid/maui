@@ -121,7 +121,7 @@ namespace Microsoft.Maui.Controls
 			var oldStack = _navStack;
 
 			int index = oldStack.IndexOf(page);
-			_navStack = new List<Page>();
+			_navStack.Clear();
 
 			// Rebuild the stack up to the page that was passed in
 			// Since this now represents the current accurate stack
@@ -153,9 +153,10 @@ namespace Microsoft.Maui.Controls
 			if (_navStack.Count <= 1)
 				throw new Exception("Nav Stack consistency error");
 
-			var page = _navStack[_navStack.Count - 1];
+			int index = _navStack.Count - 1;
+			var page = _navStack[index];
+			_navStack.RemoveAt(index);
 
-			_navStack.Remove(page);
 			UpdateDisplayedPage();
 
 			await poppingCompleted;
@@ -193,8 +194,8 @@ namespace Microsoft.Maui.Controls
 			if (_navStack.Count <= 1)
 				throw new Exception("Nav Stack consistency error");
 
-			var last = _navStack[_navStack.Count - 1];
-			_navStack.Remove(last);
+			var last = _navStack[^1];
+			_navStack.RemoveAt(_navStack.Count - 1);
 
 			RemovePage(last);
 		}
@@ -217,8 +218,8 @@ namespace Microsoft.Maui.Controls
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		void IShellSectionController.SendPopped(Page page)
 		{
-			if (_navStack.Contains(page))
-				_navStack.Remove(page);
+			if (_navStack.Remove(page))
+				throw new Exception("Nav Stack consistency error");
 
 			RemovePage(page);
 		}
